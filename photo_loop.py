@@ -7,9 +7,8 @@ import datetime
 import picamera
 import argparse
 
-DEFAULT_TIMESTEP = datetime.timedelta(seconds=5)
-DEFAULT_WINDOW = datetime.timedelta(minutes=1)
-DEFAULT_OUTPUT = "/home/glock/cam/capture-%s.jpg"
+DEFAULT_TIMESTEP = datetime.timedelta(seconds=15)
+DEFAULT_WINDOW = datetime.timedelta(days=1)
 
 def get_oldest_file(file_list):
     oldest_file = (None, datetime.datetime.now())
@@ -33,8 +32,11 @@ def get_files_before(before, file_list):
 def log_msg(msg):
     print datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]"), msg
 
-def camera_loop(timestep, window_width, output_template, dry_run=False):
+def camera_loop(timestep, window_width, output_template, dry_run=False, hflip=False, vflip=False):
     cam = picamera.PiCamera()
+    cam.vflip = hflip
+    cam.hflip = vflip
+
     while True:
         loop_start = datetime.datetime.now()
         output_file = output_template % loop_start.strftime("%Y%m%d%H%M%S")
@@ -54,26 +56,29 @@ def camera_loop(timestep, window_width, output_template, dry_run=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--timestep', default=None, type=int, help="time between successive photos in seconds (default=300)")
-    parser.add_argument('-w', '--window', default=None, type=int, help="window of time over which photos should be retained (default=86400)")
-    parser.add_argument('-o', '--output', default=None, type=str, help="full path to output files; must contain '*' where date is substituted")
+    parser.add_argument('-t', '--timestep', default=None, type=int, help="time between successive photos in seconds (default=%d)" % DEFAULT_TIMESTEP.total_seconds())
+    parser.add_argument('-w', '--window', default=None, type=int, help="window of time over which photos should be retained (default=%d)" % DEFAULT_WINDOW.total_seconds())
     parser.add_argument('-d', '--dryrun', default=False, action='store_true', help="don't actually take photos or delete old files")
+    parser.add_argument('--hflip', action='store_true', help="flip camera horizontally")
+    parser.add_argument('--vflip', action='store_true', help="flip camera vertically")
+    parser.add_argument('output', type=str, help="full path to output files; must contain '*' where date is substituted")
     args = parser.parse_args()
 
     if args.timestep is None:
         timestep = DEFAULT_TIMESTEP
     else:
         timestep = datetime.timedelta(seconds=args.timestep)
+
     if args.window is None:
         window_width = DEFAULT_WINDOW 
     else:
         window_width = datetime.timedelta(seconds=args.window)
-    if args.output is None:
-        output_template = DEFAULT_OUTPUT
-    else:
-        output_template = args.output.replace("*", "%s")
+
+    output_template = args.output.replace("*", "%s")
         
     camera_loop(timestep=timestep,
                 window_width=window_width,
                 output_template=output_template,
-                dry_run=args.dryrun)
+                dry_run=args.dryrun,
+                hflip=args.hflip,
+                vflip=args.vflip)
