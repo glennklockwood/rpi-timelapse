@@ -32,10 +32,12 @@ def get_files_before(before, file_list):
 def log_msg(msg):
     print datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]"), msg
 
-def camera_loop(timestep, window_width, output_template, dry_run=False, hflip=False, vflip=False):
+def camera_loop(timestep, window_width, output_template, dry_run=False, hflip=False, vflip=False, resolution=None):
     cam = picamera.PiCamera()
     cam.vflip = hflip
     cam.hflip = vflip
+    if resolution:
+        cam.resolution = resolution
 
     while True:
         loop_start = datetime.datetime.now()
@@ -61,6 +63,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dryrun', default=False, action='store_true', help="don't actually take photos or delete old files")
     parser.add_argument('--hflip', action='store_true', help="flip camera horizontally")
     parser.add_argument('--vflip', action='store_true', help="flip camera vertically")
+    parser.add_argument('--resolution', default=None, type=str, help="photo resolution, e.g., 1920x1080")
     parser.add_argument('output', type=str, help="full path to output files; must contain '*' where date is substituted")
     args = parser.parse_args()
 
@@ -74,6 +77,14 @@ if __name__ == "__main__":
     else:
         window_width = datetime.timedelta(seconds=args.window)
 
+    if args.resolution:
+        x, y = args.resolution.split('x', 1)
+        x = int(x)
+        y = int(y)
+        resolution = (x, y)
+    else:
+        resolution = None
+
     output_template = args.output.replace("*", "%s")
         
     camera_loop(timestep=timestep,
@@ -81,4 +92,5 @@ if __name__ == "__main__":
                 output_template=output_template,
                 dry_run=args.dryrun,
                 hflip=args.hflip,
-                vflip=args.vflip)
+                vflip=args.vflip,
+                resolution=resolution)
