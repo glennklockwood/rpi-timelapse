@@ -14,7 +14,13 @@ on the Raspberry Pi's SD card:
 
 Step 2: Run the photo taking loop:
 
-    ./photo_loop.py /mnt/2020-07/capture-*.jpg 2>&1 > timelapse.log
+    ./photo_loop.py --resolution 1296x972 --window $((30*86400)) --timestep 3600 '/mnt/2020-07/capture-*.jpg' 2>&1 > timelapse.log
+
+A few optional parameters are shown above:
+
+- `--resolution 1296x972` sets the resolution of each screen grab
+- `--window $((30*86400))` will cause frames more than 30 days old to be deleted automatically
+- `--timestep 3600` will only capture a photo once every hour
 
 Step 3: Assemble time lapses:
 
